@@ -1,0 +1,25 @@
+      SELECT DISTINCT      bethadba.EFIMPORTADOR_FIXO_NFE_ENTRADA_CFOP.CODI_EMP AS COD_EMP,
+                     	     bethadba.EFIMPORTADOR_FIXO_NFE_ENTRADA_CFOP.I_CFOP_ENTRADA AS IND_CFOP_E, 
+                     	     bethadba.EFIMPORTADOR_FIXO_NFE_ENTRADA_CFOP.CFOP AS CFOP_ENT,
+                           LIST(bethadba.EFIMPORTADOR_FIXO_NFE_ENTRADA_CFOP_SAIDA.I_CFOP_SAIDA) AS IND_CFOP_S, 
+                           LIST(bethadba.EFIMPORTADOR_FIXO_NFE_ENTRADA_CFOP_SAIDA.CFOP) AS CFOP_SAI,
+                           LIST(bethadba.EFIMPORTADOR_FIXO_NFE_ENTRADA_CFOP_NCM.I_NCM) AS IND_NCM, 
+                           LIST(bethadba.EFIMPORTADOR_FIXO_NFE_ENTRADA_CFOP_NCM.NCM) AS NCM     
+                           
+
+      FROM  	             bethadba.EFIMPORTADOR_FIXO_NFE_ENTRADA_CFOP   
+      
+      LEFT JOIN            bethadba.EFIMPORTADOR_FIXO_NFE_ENTRADA_CFOP_SAIDA
+      ON 	                 bethadba.EFIMPORTADOR_FIXO_NFE_ENTRADA_CFOP.CODI_EMP =
+      	                   bethadba.EFIMPORTADOR_FIXO_NFE_ENTRADA_CFOP_SAIDA.CODI_EMP
+      AND	                 bethadba.EFIMPORTADOR_FIXO_NFE_ENTRADA_CFOP.I_CFOP_ENTRADA =
+      	                   bethadba.EFIMPORTADOR_FIXO_NFE_ENTRADA_CFOP_SAIDA.I_CFOP_ENTRADA
+      	            
+      LEFT JOIN            bethadba.EFIMPORTADOR_FIXO_NFE_ENTRADA_CFOP_NCM
+      ON	                 bethadba.EFIMPORTADOR_FIXO_NFE_ENTRADA_CFOP.CODI_EMP =
+                           bethadba.EFIMPORTADOR_FIXO_NFE_ENTRADA_CFOP_NCM.CODI_EMP
+      AND	                 bethadba.EFIMPORTADOR_FIXO_NFE_ENTRADA_CFOP.I_CFOP_ENTRADA =
+                           bethadba.EFIMPORTADOR_FIXO_NFE_ENTRADA_CFOP_NCM.I_CFOP_ENTRADA
+                        
+     GROUP BY 
+      COD_EMP, IND_CFOP_E, CFOP_ENT;

@@ -1,0 +1,25 @@
+SELECT		efsaidas.codi_emp, 
+    		efsaidas.codi_sai, 
+    		efsaidas.nume_sai, 		 
+    		efsaidas.segi_sai, 
+    		efsaidas.ddoc_sai, 
+    		efsaidas.codi_acu, 
+    		efsaidas.codi_nat, 
+    		efsaidas.vcon_sai, 
+    		efsaidas.situacao_sai, 
+    		efsaidas.codi_usu,
+    		efsaidas.codi_esp,
+    		geimposto.nome_imp,
+    		efimpsai.vlor_sai,
+    		efimpsai.vise_sai,
+    		efimpsai.vout_sai
+    		efimpsai.bcal_isa
+
+FROM		bethadba.efsaidas
+LEFT JOIN	bethadba.efimpsai
+    ON 		efimpsai.codi_emp = efsaidas.codi_emp 
+    AND 		efimpsai.codi_sai = efsaidas.codi_sai
+LEFT JOIN	bethadba.geimposto
+    ON 		efimpsai.codi_emp = geimposto.codi_emp  
+    AND 		efimpsai.codi_imp = geimposto.codi_imp  
+WHERE		efsaidas.ddoc_sai BETWEEN :d_ini AND :d_fim

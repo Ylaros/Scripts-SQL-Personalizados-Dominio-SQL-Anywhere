@@ -1,0 +1,15 @@
+SELECT 
+    user_name(t.creator) AS schema_name,
+    t.table_name,
+    ta.descricao AS apelido,
+    c.column_name
+FROM 
+    systable t
+JOIN 
+    syscolumn c ON t.table_id = c.table_id
+LEFT JOIN 
+    bethadba.autabelas ta ON ta.table_id = t.table_id
+WHERE 
+    t.table_type = 'BASE'
+ORDER BY 
+    schema_name, t.table_name, c.column_id;

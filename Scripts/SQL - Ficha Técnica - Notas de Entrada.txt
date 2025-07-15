@@ -1,0 +1,69 @@
+SELECT 
+    nf.codi_emp,
+    nf.nume_ent AS nota,
+    prod.data_mep AS data_mov,
+    nf.codi_nat AS cfop,
+    cad_nat.nome_nat AS nome_natureza,       
+    nf.codi_acu AS acumulador,
+    acum.nome_acu AS nome_acumulador,
+    forne.nome_for AS fornecedor,
+    nf.conferido,
+    forne.codi_for AS cod_fornecedor, 
+    SUBSTRING(RIGHT('00000000' || cad_prod.cncm_pdi, 8), 1, 4) || '-' ||
+    SUBSTRING(RIGHT('00000000' || cad_prod.cncm_pdi, 8), 5, 2) || '-' ||
+    SUBSTRING(RIGHT('00000000' || cad_prod.cncm_pdi, 8), 7, 2) AS NCM,  
+    TRIM(cad_prod.codi_pdi) AS Cod_Prod,
+    cad_prod.desc_pdi AS Descricao_Prod,
+    empresa.nome_emp AS Nome_Empresa,
+    nf.vcon_ent AS valor_nota,
+    USER AS usuario_relatorio,
+    SUBSTRING(empresa.cgce_emp, 1, 2) || '.' ||
+    SUBSTRING(empresa.cgce_emp, 3, 3) || '.' ||
+    SUBSTRING(empresa.cgce_emp, 6, 3) || '/' ||
+    SUBSTRING(empresa.cgce_emp, 9, 4) || '-' ||
+    SUBSTRING(empresa.cgce_emp, 13, 2) AS CNPJ,
+
+    /*-- Impostos concatenados por nome  */
+    (
+        SELECT LIST(imposto.nome_imp, '/ ')
+        FROM bethadba.efimpent imp
+        LEFT JOIN bethadba.geimposto imposto
+            ON imp.codi_emp = imposto.codi_emp  
+           AND imp.codi_imp = imposto.codi_imp  
+        WHERE imp.codi_emp = nf.codi_emp
+          AND imp.codi_ent = nf.codi_ent
+    ) AS nome_impostos,
+    
+    /*-- Impostos concatenados por valor  */
+    (
+        SELECT LIST(STRING(imp.vlor_ien), '/ ')
+        FROM bethadba.efimpent imp
+        WHERE imp.codi_emp = nf.codi_emp
+          AND imp.codi_ent = nf.codi_ent
+    ) AS valor_impostos
+
+
+FROM bethadba.efentradas AS nf
+JOIN bethadba.efprodutos AS cad_prod
+    ON nf.codi_emp = cad_prod.codi_emp
+JOIN bethadba.efmvepro AS prod
+    ON nf.codi_emp = prod.codi_emp
+   AND nf.codi_ent = prod.codi_ent
+   AND cad_prod.codi_pdi = prod.codi_pdi
+JOIN bethadba.effornece AS forne
+    ON nf.codi_emp = forne.codi_emp
+   AND nf.codi_for = forne.codi_for
+JOIN bethadba.efnatureza AS cad_nat
+    ON cad_nat.codi_nat = nf.codi_nat
+   AND cad_nat.versao_nat = '2'
+JOIN bethadba.efacumulador AS acum
+    ON nf.codi_emp = acum.codi_emp
+   AND nf.codi_acu = acum.codi_acu
+JOIN bethadba.geempre AS empresa
+    ON nf.codi_emp = empresa.codi_emp
+
+WHERE 
+    nf.codi_emp = :empresa AND
+    nf.conferido = 'N' AND
+    prod.data_mep BETWEEN :d_ini AND :d_fim
+    ORDER BY prod.data_mep

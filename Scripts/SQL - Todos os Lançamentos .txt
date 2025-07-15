@@ -1,0 +1,38 @@
+SELECT
+		ctlancto.codi_emp,
+		geempre.razao_emp,
+		ctlancto.codi_lote,
+		efentradas.nume_ent,
+		ctlancto.data_lan,
+		ctlancto.vlor_lan,
+		ctlancto.cdeb_lan,
+		cdeb_ctcontas.nome_cta AS cdeb_nome_cta,
+		ctlancto.ccre_lan,
+		ccre_ctcontas.nome_cta AS ccre_nome_cta,
+		ctlancto.codi_his,
+		ctlancto.chis_lan,
+		ctlancto.codi_usu,
+		ctlancto.orig_lan,
+		ctlancto.origem_reg
+FROM
+		bethadba.ctlancto
+		LEFT JOIN
+		bethadba.efentradas_lancto
+		ON ctlancto.codi_emp = efentradas_lancto.codi_emp
+		AND ctlancto.nume_lan = efentradas_lancto.nume_lan
+		LEFT JOIN
+		bethadba.efentradas
+		ON efentradas_lancto.codi_emp = efentradas.codi_emp
+		AND efentradas_lancto.codi_ent = efentradas.codi_ent
+		LEFT JOIN
+		bethadba.geempre
+		ON ctlancto.codi_emp = geempre.codi_emp
+		LEFT JOIN
+		bethadba.ctcontas AS cdeb_ctcontas
+		ON ctlancto.cdeb_lan = cdeb_ctcontas.codi_cta
+		AND ctlancto.codi_emp = cdeb_ctcontas.codi_emp
+		LEFT JOIN
+		bethadba.ctcontas AS ccre_ctcontas
+		ON ctlancto.ccre_lan = ccre_ctcontas.codi_cta
+		AND ctlancto.codi_emp = ccre_ctcontas.codi_emp
+
