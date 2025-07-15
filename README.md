@@ -18,7 +18,7 @@ Facilitar o uso de consultas SQL no Domínio, oferecendo modelos prontos para:
 
 ---
 
-## 📂 Lista de scripts disponíveis
+## 📂 Lista de scripts disponíveis [https://github.com/Ylaros/Scripts-SQL-Personalizados-Dominio-SQL-Anywhere/tree/main/Scripts]
 
 | Script                                       | Descrição                                                                                     |
 |---------------------------------------------|-----------------------------------------------------------------------------------------------|
