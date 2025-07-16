@@ -23,7 +23,7 @@ Facilitar o uso de consultas SQL no Domínio, oferecendo modelos prontos para:
 | Script                                       | Descrição                                                                                     |
 |---------------------------------------------|-----------------------------------------------------------------------------------------------|
 | **1. Acumuladores Full**                    | Relação completa de todos os acumuladores de todas as empresas com seus respectivos dados.   |
-| **2. Configuração de Importação - CFOP**    | Consulta prática da configuração de importação de documentos fiscais por CFOP. Ideal para revisão e exportação. |
+| **2. Configuração de Importação - CFOP**    | Consulta prática da configuração de importação de documentos fiscais por CFOP (Configurados como NCM). Ideal para revisão e exportação. Obs.: Ler notas no script |
 | **3. Ficha Técnica - Notas de Entrada**     | Relatório de notas não conferidas com campos preparados para revisão e edição do analista.   |
 | **4. Relação de Tabelas e Colunas**         | Mapeamento completo de todas as tabelas e colunas do banco SQL Anywhere – extremamente útil para quem desenvolve no gerador. |
 | **5. Resumido com Impostos - Cupons**       | Relatório de cupons fiscais com dados essenciais e tributos destacados.                      |
