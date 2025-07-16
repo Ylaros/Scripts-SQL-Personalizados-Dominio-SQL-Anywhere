@@ -30,6 +30,7 @@ Facilitar o uso de consultas SQL no Domínio, oferecendo modelos prontos para:
 | **6. Resumido com Impostos - Entradas**     | Relatório de entradas (compras) com valores de produtos, impostos e CFOP.                    |
 | **7. Resumido com Impostos - Saídas**       | Relatório de notas de saída com base fiscal e tributária detalhada.                         |
 | **8. Todos os Lançamentos**                 | Consulta completa de todos os lançamentos contábeis e fiscais de todas as empresas.          |
+| **9. Variabilidade de NCM**                 | Analisa alterações em configurações de NCMs dentro de um determinado tempo. Apresenta a configuração atual também         |
 
 ---
 
