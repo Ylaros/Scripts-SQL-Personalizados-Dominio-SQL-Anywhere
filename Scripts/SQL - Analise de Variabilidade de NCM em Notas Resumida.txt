@@ -1,7 +1,26 @@
 WITH 
+
 CFOP_SAIDAS_ORDENADAS AS (
     SELECT DISTINCT CODI_EMP, I_CFOP_ENTRADA, CFOP
     FROM bethadba.EFIMPORTADOR_FIXO_NFE_ENTRADA_CFOP_SAIDA
+),
+
+
+CFOP_SAIDAS_MAPEADAS AS (
+    SELECT 
+        cfop.CODI_EMP,
+        acu.I_ACUMULADOR,
+        LIST(DISTINCT cfop_sai.CFOP ORDER BY cfop_sai.CFOP) AS CFOP_SAIDAS
+    FROM bethadba.EFIMPORTADOR_FIXO_NFE_ENTRADA_CFOP cfop
+    INNER JOIN bethadba.EFIMPORTADOR_FIXO_NFE_ENTRADA_CFOP_NCM ncm
+        ON cfop.CODI_EMP = ncm.CODI_EMP AND cfop.I_CFOP_ENTRADA = ncm.I_CFOP_ENTRADA
+    INNER JOIN bethadba.EFIMPORTADOR_FIXO_NFE_ENTRADA_ACUMULADOR_NCM acu_ncm
+        ON acu_ncm.CODI_EMP = ncm.CODI_EMP AND acu_ncm.NCM = ncm.NCM
+    INNER JOIN bethadba.EFIMPORTADOR_FIXO_NFE_ENTRADA_ACUMULADOR acu
+        ON acu.CODI_EMP = acu_ncm.CODI_EMP AND acu.I_ACUMULADOR = acu_ncm.I_ACUMULADOR
+    LEFT JOIN bethadba.EFIMPORTADOR_FIXO_NFE_ENTRADA_CFOP_SAIDA cfop_sai
+        ON cfop.CODI_EMP = cfop_sai.CODI_EMP AND cfop.I_CFOP_ENTRADA = cfop_sai.I_CFOP_ENTRADA
+    GROUP BY cfop.CODI_EMP, acu.I_ACUMULADOR
 ),
 
 
@@ -15,8 +34,7 @@ CONFIGURACAO_BASE AS (
         acu_cfop_only_join.CODI_ACU AS ACU_CFOP,
         acu_cfop_only_join.I_ACUMULADOR AS I_ACU_CFOP,
         efac.NOME_ACU,
-        
- 
+
         CASE 
           WHEN acu_ncm_join.CODI_ACU IS NULL 
                AND acu_cfop_only_join.CODI_ACU IS NOT NULL
@@ -44,36 +62,28 @@ CONFIGURACAO_BASE AS (
        AND cfop.I_CFOP_ENTRADA = ncm.I_CFOP_ENTRADA
 
     LEFT JOIN bethadba.EFIMPORTADOR_FIXO_NFE_ENTRADA_ACUMULADOR_NCM acu_ncm
-        ON acu_ncm.CODI_EMP = cfop.CODI_EMP 
-       AND acu_ncm.NCM = ncm.NCM
+        ON acu_ncm.CODI_EMP = cfop.CODI_EMP AND acu_ncm.NCM = ncm.NCM
 
     LEFT JOIN bethadba.EFIMPORTADOR_FIXO_NFE_ENTRADA_ACUMULADOR_CFOP acu_cfop
-        ON acu_cfop.CODI_EMP = cfop.CODI_EMP 
-       AND acu_cfop.CFOP = cfop.CFOP 
-       AND acu_cfop.I_ACUMULADOR = acu_ncm.I_ACUMULADOR
+        ON acu_cfop.CODI_EMP = cfop.CODI_EMP AND acu_cfop.CFOP = cfop.CFOP AND acu_cfop.I_ACUMULADOR = acu_ncm.I_ACUMULADOR
 
     LEFT JOIN bethadba.EFIMPORTADOR_FIXO_NFE_ENTRADA_ACUMULADOR acu_ncm_join
-        ON acu_ncm_join.CODI_EMP = cfop.CODI_EMP 
-       AND acu_ncm_join.I_ACUMULADOR = acu_ncm.I_ACUMULADOR
+        ON acu_ncm_join.CODI_EMP = cfop.CODI_EMP AND acu_ncm_join.I_ACUMULADOR = acu_ncm.I_ACUMULADOR
 
     LEFT JOIN bethadba.EFIMPORTADOR_FIXO_NFE_ENTRADA_ACUMULADOR_CFOP acu_cfop_only
-        ON acu_cfop_only.CODI_EMP = cfop.CODI_EMP 
-       AND acu_cfop_only.CFOP = cfop.CFOP
+        ON acu_cfop_only.CODI_EMP = cfop.CODI_EMP AND acu_cfop_only.CFOP = cfop.CFOP
 
     LEFT JOIN bethadba.EFIMPORTADOR_FIXO_NFE_ENTRADA_ACUMULADOR acu_cfop_only_join
-        ON acu_cfop_only_join.CODI_EMP = cfop.CODI_EMP 
-       AND acu_cfop_only_join.I_ACUMULADOR = acu_cfop_only.I_ACUMULADOR
+        ON acu_cfop_only_join.CODI_EMP = cfop.CODI_EMP AND acu_cfop_only_join.I_ACUMULADOR = acu_cfop_only.I_ACUMULADOR
 
     LEFT JOIN bethadba.efacumulador efac
-        ON efac.CODI_EMP = cfop.CODI_EMP 
-       AND efac.CODI_ACU = COALESCE(acu_ncm_join.CODI_ACU, acu_cfop_only_join.CODI_ACU)
+        ON efac.CODI_EMP = cfop.CODI_EMP AND efac.CODI_ACU = COALESCE(acu_ncm_join.CODI_ACU, acu_cfop_only_join.CODI_ACU)
 
     WHERE emp.CODI_EMP = :empresa
 ),
 
 
 CONFIGURACAO AS (
-
     SELECT 
         CODI_EMP,
         CAST(CFOP AS VARCHAR) AS CFOP_ENT,
@@ -89,7 +99,6 @@ CONFIGURACAO AS (
 
     UNION
 
-
     SELECT 
         emp.CODI_EMP,
         CASE 
@@ -99,24 +108,24 @@ CONFIGURACAO AS (
         acu_ncm.NCM,
         CAST(acu.CODI_ACU AS VARCHAR) AS ACUMULADOR_CONFIG,
         COALESCE(efac.NOME_ACU, '') AS NOME_ACUMULADOR_CONFIG,
-        LIST(DISTINCT acu_cfop.CFOP ORDER BY acu_cfop.CFOP) AS CFOP_SAIDAS_CONFIG
+        COALESCE(cfop_mapeado.CFOP_SAIDAS, '') AS CFOP_SAIDAS_CONFIG
 
     FROM bethadba.EFIMPORTADOR_FIXO_NFE_ENTRADA_ACUMULADOR_NCM acu_ncm
 
     INNER JOIN bethadba.EFIMPORTADOR_FIXO_NFE_ENTRADA_ACUMULADOR acu
-        ON acu.CODI_EMP = acu_ncm.CODI_EMP 
-       AND acu.I_ACUMULADOR = acu_ncm.I_ACUMULADOR
+        ON acu.CODI_EMP = acu_ncm.CODI_EMP AND acu.I_ACUMULADOR = acu_ncm.I_ACUMULADOR
 
     LEFT JOIN bethadba.EFIMPORTADOR_FIXO_NFE_ENTRADA_ACUMULADOR_CFOP acu_cfop
-        ON acu_cfop.CODI_EMP = acu_ncm.CODI_EMP 
-       AND acu_cfop.I_ACUMULADOR = acu_ncm.I_ACUMULADOR
+        ON acu_cfop.CODI_EMP = acu_ncm.CODI_EMP AND acu_cfop.I_ACUMULADOR = acu_ncm.I_ACUMULADOR
 
     LEFT JOIN bethadba.geempre emp 
         ON emp.CODI_EMP = acu_ncm.CODI_EMP
 
     LEFT JOIN bethadba.efacumulador efac
-        ON efac.CODI_EMP = acu.CODI_EMP 
-       AND efac.CODI_ACU = acu.CODI_ACU
+        ON efac.CODI_EMP = acu.CODI_EMP AND efac.CODI_ACU = acu.CODI_ACU
+
+    LEFT JOIN CFOP_SAIDAS_MAPEADAS cfop_mapeado
+        ON cfop_mapeado.CODI_EMP = acu.CODI_EMP AND cfop_mapeado.I_ACUMULADOR = acu.I_ACUMULADOR
 
     WHERE emp.CODI_EMP = :empresa
       AND NOT EXISTS (
@@ -132,11 +141,12 @@ CONFIGURACAO AS (
           ELSE 'ST-(sem CFOP)'
         END,
         CAST(acu.CODI_ACU AS VARCHAR),
-        COALESCE(efac.NOME_ACU, '')
+        COALESCE(efac.NOME_ACU, ''),
+        cfop_mapeado.CFOP_SAIDAS
 )
 
 
-SELECT DISTINCT
+SELECT 
     nf.codi_emp,
     nf.nume_ent    AS nota,
     prod.data_mep  AS data_mov,
@@ -156,7 +166,6 @@ SELECT DISTINCT
     SUBSTRING(empresa.cgce_emp,9,4) || '-' ||
     SUBSTRING(empresa.cgce_emp,13,2) AS CNPJ,
 
-
     (
       SELECT LIST(imposto.nome_imp, '/ ')
       FROM bethadba.efimpent imp
@@ -167,11 +176,10 @@ SELECT DISTINCT
         AND imp.codi_ent = nf.codi_ent
     ) AS nome_impostos,
 
- 
-    config.CFOP_ENT        AS CFOP_ENT_CONFIG,
-    config.ACUMULADOR_CONFIG,
-    config.NOME_ACUMULADOR_CONFIG,
-    config.CFOP_SAIDAS_CONFIG
+    LIST(DISTINCT config.CFOP_ENT, ' / ') AS CFOP_ENT_CONFIG,
+    LIST(DISTINCT config.ACUMULADOR_CONFIG, ' / ') AS ACUMULADOR_CONFIG,
+    LIST(DISTINCT config.NOME_ACUMULADOR_CONFIG, ' / ') AS NOME_ACUMULADOR_CONFIG,
+    LIST(DISTINCT config.CFOP_SAIDAS_CONFIG, ' / ') AS CFOP_SAIDAS_CONFIG
 
 FROM bethadba.efentradas nf
 
@@ -198,7 +206,7 @@ JOIN bethadba.efacumulador acum
 JOIN bethadba.geempre empresa
   ON nf.codi_emp = empresa.codi_emp
 
-LEFT JOIN CONFIGURACAO config
+INNER JOIN CONFIGURACAO config
   ON config.CODI_EMP = nf.codi_emp
  AND config.NCM = cad_prod.cncm_pdi
 
@@ -206,5 +214,21 @@ WHERE
     nf.codi_emp = :empresa
     AND prod.data_mep BETWEEN :d_ini AND :d_fim
     AND cad_prod.cncm_pdi = :ncm
+
+GROUP BY 
+    nf.codi_emp,
+    nf.codi_ent,
+    nf.nume_ent,
+    prod.data_mep,
+    nf.codi_nat,
+    cad_nat.nome_nat,
+    nf.codi_acu,
+    acum.nome_acu,
+    forne.nome_for,
+    forne.codi_for,
+    cad_prod.cncm_pdi,
+    empresa.nome_emp,
+    USER,
+    empresa.cgce_emp
 
 ORDER BY prod.data_mep;
