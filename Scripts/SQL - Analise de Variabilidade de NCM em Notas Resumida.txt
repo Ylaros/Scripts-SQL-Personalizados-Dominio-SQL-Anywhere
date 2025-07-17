@@ -1,11 +1,10 @@
-/*-- CTE de saídas de CFOP ordenadas --*/
 WITH 
 CFOP_SAIDAS_ORDENADAS AS (
     SELECT DISTINCT CODI_EMP, I_CFOP_ENTRADA, CFOP
     FROM bethadba.EFIMPORTADOR_FIXO_NFE_ENTRADA_CFOP_SAIDA
 ),
 
-/*-- CTE base que traz CFOP x NCM x acumulador, com lógica de ST- para fallback CFOP-only --*/
+
 CONFIGURACAO_BASE AS (
     SELECT 
         cfop.*,
@@ -17,7 +16,7 @@ CONFIGURACAO_BASE AS (
         acu_cfop_only_join.I_ACUMULADOR AS I_ACU_CFOP,
         efac.NOME_ACU,
         
-        /*-- Se não há NCM-configurado, mas há CFOP-only sem NCM associado, marca ST- --*/
+ 
         CASE 
           WHEN acu_ncm_join.CODI_ACU IS NULL 
                AND acu_cfop_only_join.CODI_ACU IS NOT NULL
@@ -72,9 +71,9 @@ CONFIGURACAO_BASE AS (
     WHERE emp.CODI_EMP = :empresa
 ),
 
-/*-- CTE configuração que agrupa por CFOP x NCM, incluindo UN ION para acumuladores sem NCM --*/
+
 CONFIGURACAO AS (
-    /*-- Primeiro bloco: histórico de CFOP_NCM --*/
+
     SELECT 
         CODI_EMP,
         CAST(CFOP AS VARCHAR) AS CFOP_ENT,
@@ -90,7 +89,7 @@ CONFIGURACAO AS (
 
     UNION
 
-    /*-- Segundo bloco: acumuladores por NCM puros (sem CFOP_NCM) --*/
+
     SELECT 
         emp.CODI_EMP,
         CASE 
@@ -136,7 +135,7 @@ CONFIGURACAO AS (
         COALESCE(efac.NOME_ACU, '')
 )
 
-/*-- Consulta principal: histórico de notas + configuração esperada --*/
+
 SELECT DISTINCT
     nf.codi_emp,
     nf.nume_ent    AS nota,
@@ -157,7 +156,7 @@ SELECT DISTINCT
     SUBSTRING(empresa.cgce_emp,9,4) || '-' ||
     SUBSTRING(empresa.cgce_emp,13,2) AS CNPJ,
 
-    /*-- Impostos concatenados por nome --*/
+
     (
       SELECT LIST(imposto.nome_imp, '/ ')
       FROM bethadba.efimpent imp
@@ -168,7 +167,7 @@ SELECT DISTINCT
         AND imp.codi_ent = nf.codi_ent
     ) AS nome_impostos,
 
-    /*-- Configuração esperada trazida por LEFT JOIN --*/
+ 
     config.CFOP_ENT        AS CFOP_ENT_CONFIG,
     config.ACUMULADOR_CONFIG,
     config.NOME_ACUMULADOR_CONFIG,
@@ -201,8 +200,7 @@ JOIN bethadba.geempre empresa
 
 LEFT JOIN CONFIGURACAO config
   ON config.CODI_EMP = nf.codi_emp
- AND config.NCM      = cad_prod.cncm_pdi
- AND config.CFOP_ENT = CAST(nf.codi_nat AS VARCHAR)
+ AND config.NCM = cad_prod.cncm_pdi
 
 WHERE 
     nf.codi_emp = :empresa
