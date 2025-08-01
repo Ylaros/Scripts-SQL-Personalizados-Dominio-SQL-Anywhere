@@ -66,12 +66,24 @@ CONFIGURACAO AS (
 
     UNION
 
+
+
+
     SELECT 
         emp.CODI_EMP,
         emp.NOME_EMP,
-        CASE WHEN acu_cfop.CFOP IS NOT NULL 
-             THEN 'ST-'||CAST(acu_cfop.CFOP AS VARCHAR) 
-             ELSE 'ST-(sem CFOP)' 
+        CASE 
+          WHEN cfop_ncm_chk.NCM IS NOT NULL THEN
+            CAST(acu_cfop.CFOP AS VARCHAR) 
+    
+          WHEN acu_cfop.CFOP IS NOT NULL AND cfop_tem_ncm.TEM_NCM > 0 THEN
+            'NR-' || CAST(acu_cfop.CFOP AS VARCHAR)
+    
+          WHEN acu_cfop.CFOP IS NOT NULL THEN
+            'ST-' || CAST(acu_cfop.CFOP AS VARCHAR)
+    
+          ELSE
+            '(sem CFOP)'
         END AS CFOP_ENT,
         COALESCE(
           LIST(DISTINCT saida_real.CFOP ORDER BY saida_real.CFOP),
@@ -90,12 +102,19 @@ CONFIGURACAO AS (
     LEFT JOIN bethadba.EFIMPORTADOR_FIXO_NFE_ENTRADA_CFOP cfop_real
       ON cfop_real.CODI_EMP = acu_cfop.CODI_EMP
      AND cfop_real.CFOP     = acu_cfop.CFOP
-     AND NOT EXISTS (
-         SELECT 1
-           FROM bethadba.EFIMPORTADOR_FIXO_NFE_ENTRADA_CFOP_NCM x
-          WHERE x.CODI_EMP       = cfop_real.CODI_EMP
-            AND x.I_CFOP_ENTRADA = cfop_real.I_CFOP_ENTRADA
-     )
+
+    LEFT JOIN (
+        SELECT CODI_EMP, I_CFOP_ENTRADA, COUNT(*) AS TEM_NCM
+        FROM bethadba.EFIMPORTADOR_FIXO_NFE_ENTRADA_CFOP_NCM
+        GROUP BY CODI_EMP, I_CFOP_ENTRADA
+    ) cfop_tem_ncm
+      ON cfop_tem_ncm.CODI_EMP       = cfop_real.CODI_EMP
+     AND cfop_tem_ncm.I_CFOP_ENTRADA = cfop_real.I_CFOP_ENTRADA
+
+    LEFT JOIN bethadba.EFIMPORTADOR_FIXO_NFE_ENTRADA_CFOP_NCM cfop_ncm_chk
+      ON cfop_ncm_chk.CODI_EMP       = cfop_real.CODI_EMP
+     AND cfop_ncm_chk.I_CFOP_ENTRADA = cfop_real.I_CFOP_ENTRADA
+     AND cfop_ncm_chk.NCM            = acu_ncm.NCM
     LEFT JOIN CFOP_SAIDAS_ORDENADAS saida_real
       ON saida_real.CODI_EMP       = cfop_real.CODI_EMP
      AND saida_real.I_CFOP_ENTRADA = cfop_real.I_CFOP_ENTRADA
@@ -105,17 +124,20 @@ CONFIGURACAO AS (
       ON efac.CODI_EMP = acu.CODI_EMP 
      AND efac.CODI_ACU = acu.CODI_ACU
     WHERE emp.CODI_EMP = :COD_EMP
-      AND NOT EXISTS (
-          SELECT 1
-            FROM bethadba.EFIMPORTADOR_FIXO_NFE_ENTRADA_CFOP_NCM cfop_ncm
-           WHERE cfop_ncm.CODI_EMP = acu_ncm.CODI_EMP
-             AND cfop_ncm.NCM      = acu_ncm.NCM
-      )
-      AND (
-           acu_cfop.CFOP IS NULL
-        OR cfop_real.I_CFOP_ENTRADA IS NOT NULL
-      )
-    GROUP BY emp.CODI_EMP, emp.NOME_EMP, acu_cfop.CFOP, acu_ncm.NCM, acu.CODI_ACU, efac.NOME_ACU
+    GROUP BY 
+        emp.CODI_EMP, 
+        emp.NOME_EMP, 
+        acu_cfop.CFOP, 
+        acu_ncm.NCM, 
+        cfop_ncm_chk.NCM, 
+        cfop_tem_ncm.TEM_NCM, 
+        acu.CODI_ACU, 
+        efac.NOME_ACU
+
+
+
+
+
 
     UNION
 
@@ -176,6 +198,9 @@ SELECT
     forne.nome_for AS fornecedor,
     forne.codi_for AS cod_fornecedor,
     cad_prod.cncm_pdi AS NCM,
+    SUBSTRING(RIGHT('00000000'||cad_prod.cncm_pdi,8),1,4)||'-'
+  ||SUBSTRING(RIGHT('00000000'||cad_prod.cncm_pdi,8),5,2)||'-'
+  ||SUBSTRING(RIGHT('00000000'||cad_prod.cncm_pdi,8),7,2) AS NCM2,
     empresa.nome_emp AS Nome_Empresa,
     USER AS usuario_relatorio,
     SUBSTRING(empresa.cgce_emp,1,2) || '.' ||
@@ -237,4 +262,5 @@ GROUP BY
     USER,
     empresa.cgce_emp
 ORDER BY prod.data_mep;
+
 
