@@ -48,6 +48,7 @@ Facilitar o uso de consultas SQL no Domínio, oferecendo modelos prontos para:
 - Os arquivos estão no formato `.txt` para facilitar leitura, edição e importação.
 - Recomenda-se testar os scripts em ambiente controlado antes de uso em produção.
 - Nenhum dado sensível ou confidencial foi incluído nos arquivos.
+- A pasta BGR possui os relatórios prontos para importar. Recomendo editar as partes visuais do relatório para melhor adaptação a realidade de cada empresa
 
 ---
 
